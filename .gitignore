@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.xlsx
+*.pdf
+.env
+
+# Ignorar el entorno virtual
+venv/
+
+# Ignorar archivos temporales de Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignorar archivos de configuración de VS Code
+.vscode/
