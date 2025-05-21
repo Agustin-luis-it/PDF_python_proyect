@@ -6,8 +6,24 @@ from openpyxl import Workbook
 # Ruta de la carpeta con los PDF
 pdf_folder = "archivos_pdf"
 
-# Palabras clave a buscar
-keywords = ["BUENOS AIRES", "PACIENTE:", "NUMERO:"]
+# Pedir al usuario el nombre del archivo Excel
+excel_filename = input("Ingrese el nombre del archivo Excel (sin extensión): ").strip()
+if not excel_filename:
+    excel_filename = "resultados"
+excel_filename += ".xlsx"
+
+# Pedir al usuario las palabras clave a buscar
+keywords = []
+print("Ingrese las palabras clave a buscar (escriba '1' para terminar):")
+while True:
+    palabra = input("Palabra clave: ").strip()
+    if palabra == "1":
+        break
+    if palabra:
+        keywords.append(palabra)
+if not keywords:
+    print("No se ingresaron palabras clave. Saliendo.")
+    exit()
 
 # Lista para almacenar los resultados de todos los archivos
 all_results = []
@@ -52,8 +68,10 @@ if all_results:
     # Escribir datos
     for row in all_results:
         ws.append(row)
-    # Guardar el archivo en la misma carpeta del script
-    excel_path = os.path.join(os.path.dirname(__file__), "resultados.xlsx")
+    # Guardar el archivo en la carpeta 'resultados'
+    resultados_folder = os.path.join(os.path.dirname(__file__), "resultados")
+    os.makedirs(resultados_folder, exist_ok=True)
+    excel_path = os.path.join(resultados_folder, excel_filename)
     wb.save(excel_path)
     print(f"\nResultados guardados en: {excel_path}")
 
