@@ -63,11 +63,20 @@ for filename in os.listdir(pdf_folder):
     if filename.endswith(".pdf"):
         pdf_path = os.path.join(pdf_folder, filename)
         with fitz.open(pdf_path) as pdf:
-            text = pdf[0].get_text()
+            text = ""
+            for page in pdf:
+                text += page.get_text() + "\n"
             results = {}
             for kw in keywords:
-                match = re.search(rf"{re.escape(kw)}\s*(.*)", text)
-                results[kw] = match.group(1).strip() if match else "No encontrado"
+                kw_clean = kw.rstrip(":").strip()
+                # Coincidencia exacta, sin distinción de mayúsculas/minúsculas, ignorando ":" opcional después de la palabra clave
+                # Empieza a tomar desde el primer caracter alfanumérico a la derecha
+                pattern = rf"\b{re.escape(kw_clean)}\b:?\s*([^\w\d]*)([A-Za-z0-9].*)"
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    results[kw] = match.group(2).strip()
+                else:
+                    results[kw] = "No encontrado"
         row = [filename] + [results[kw] for kw in keywords]
         all_results.append(row)
 
