@@ -66,7 +66,7 @@ def pedir_palabras_clave(root):
         def __init__(self, parent):
             super().__init__(parent)
             self.title("Palabras clave")
-            self.geometry("420x320")
+            self.geometry("420x340")
             self.keywords = []
             self.result = None
             ctk.CTkLabel(self, text="Ingrese las palabras clave a buscar", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(15, 10))
@@ -75,33 +75,64 @@ def pedir_palabras_clave(root):
             self.entry = ctk.CTkEntry(entry_frame, width=220, placeholder_text="Ej: paciente")
             self.entry.pack(side="left", padx=(0,10))
             ctk.CTkButton(entry_frame, text="Agregar", width=80, command=self.add_keyword).pack(side="left")
-            self.keywords_box = ctk.CTkTextbox(self, height=100, width=340)
-            self.keywords_box.pack(pady=10)
-            self.keywords_box.configure(state="disabled")
+            # Contenedor dinámico para palabras clave
+            self.keywords_container = ctk.CTkFrame(self)
+            self.keywords_container.pack(pady=10, fill="x")
             btn_frame = ctk.CTkFrame(self)
             btn_frame.pack(pady=10)
             ctk.CTkButton(btn_frame, text="Listo", width=100, command=self.finish).pack(side="left", padx=10)
             ctk.CTkButton(btn_frame, text="Cancelar", width=100, command=self.cancel).pack(side="left", padx=10)
+            self.status = ctk.CTkLabel(self, text="", text_color="red")
+            self.status.pack(pady=5)
             self.protocol("WM_DELETE_WINDOW", self.cancel)
             self.entry.bind("<Return>", lambda e: self.add_keyword())
+            self.keyword_widgets = {}  # palabra: frame
+
         def add_keyword(self):
             palabra = self.entry.get().strip()
             if palabra and palabra not in self.keywords:
                 self.keywords.append(palabra)
                 self.entry.delete(0, "end")
-                self.keywords_box.configure(state="normal")
-                self.keywords_box.insert("end", palabra + "\n")
-                self.keywords_box.configure(state="disabled")
+                self._add_keyword_widget(palabra)
+                self.status.configure(text="")
+            elif palabra in self.keywords:
+                self.status.configure(text="La palabra ya fue agregada.")
+
+        def _add_keyword_widget(self, palabra):
+            kw_frame = ctk.CTkFrame(self.keywords_container)
+            kw_frame.pack(fill="x", pady=2, padx=5)
+            lbl = ctk.CTkLabel(kw_frame, text=palabra, anchor="w")
+            lbl.pack(side="left", padx=(5, 2), fill="x", expand=True)
+            btn = ctk.CTkButton(kw_frame, text="❌", width=30, fg_color="#d9534f", hover_color="#c9302c", command=lambda: self.remove_keyword(palabra))
+            btn.pack(side="right", padx=2)
+            self.keyword_widgets[palabra] = kw_frame
+
+        def remove_keyword(self, palabra):
+            if palabra in self.keywords:
+                self.keywords.remove(palabra)
+            if palabra in self.keyword_widgets:
+                self.keyword_widgets[palabra].destroy()
+                del self.keyword_widgets[palabra]
+
         def finish(self):
-            self.result = self.keywords
-            self.destroy()
+            if not self.keywords:
+                self.status.configure(text="Debes ingresar al menos una palabra clave.")
+                return
+            self.result = list(self.keywords)
+            self.after(1, self.destroy)
+
         def cancel(self):
             self.result = []
-            self.destroy()
+            self.after(1, self.destroy)
+
     root.deiconify()
     dialog = KeywordDialog(root)
-    root.wait_window(dialog)
-    keywords = dialog.result if dialog.result else []
+    dialog.update()
+    while True:
+        root.update()
+        if not dialog.winfo_exists():
+            break
+    keywords = dialog.result if dialog.result is not None else []
     root.withdraw()
     return keywords
 
